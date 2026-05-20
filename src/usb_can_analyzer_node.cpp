@@ -187,6 +187,8 @@ private:
 class UsbCanAnalyzerNode : public rclcpp::Node
 {
 public:
+  static constexpr std::size_t READ_BUFFER_SIZE = 256U;
+
   UsbCanAnalyzerNode()
   : Node("usb_can_analyzer_node"),
     io_context_(),
@@ -295,7 +297,7 @@ private:
   boost::asio::serial_port serial_port_;
   std::thread io_thread_;
 
-  std::array<uint8_t, 256> read_buffer_{};
+  std::array<uint8_t, READ_BUFFER_SIZE> read_buffer_{};
   std::vector<uint8_t> rx_bytes_;
   std::mutex rx_mutex_;
 };
