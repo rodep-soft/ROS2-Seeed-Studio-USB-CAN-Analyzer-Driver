@@ -15,6 +15,18 @@ ROS2依存のノード層と、ROS2非依存のシリアル/プロトコル層�
 - `msg/CanFrame.msg`:
   - 独自メッセージ定義
 
+## 独自メッセージ `CanFrame`
+
+`seeed_usb_can_analyzer_driver/msg/CanFrame` は、CAN 1フレームをROS2トピックで受け渡しするためのメッセージです。
+
+- `id` (`uint32`): CAN ID（標準/拡張どちらも格納）
+- `extended` (`bool`): `false`=標準ID(11bit), `true`=拡張ID(29bit)
+- `remote` (`bool`): `false`=データフレーム, `true`=リモートフレーム
+- `dlc` (`uint8`): データ長コード（0〜8）
+- `data` (`uint8[]`): データペイロード（0〜8バイト）
+
+このドライバでは `/ssuca/transmit` 受信時に `dlc` と `data` 長が一致しないフレームを送信しません。
+
 ## ビルド
 
 ```bash
