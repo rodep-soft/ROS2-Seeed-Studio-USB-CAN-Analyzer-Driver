@@ -85,11 +85,17 @@ void configure_serial_port(int fd, int baud)
 #if defined(CRTSCTS)
   tty.c_cflag &= ~CRTSCTS;
 #endif
-  tty.c_cc[VMIN] = 1;
+  tty.c_cc[VMIN] = 0;
   tty.c_cc[VTIME] = 0;
 
 #if defined(__APPLE__)
-  if (cfsetispeed(&tty, B9600) != 0 || cfsetospeed(&tty, B9600) != 0) {
+  speed_t configured_speed = B9600;
+  try {
+    configured_speed = to_posix_baud(baud);
+  } catch (const std::invalid_argument &) {
+    // On macOS, IOSSIOSPEED below applies the exact custom baud rate.
+  }
+  if (cfsetispeed(&tty, configured_speed) != 0 || cfsetospeed(&tty, configured_speed) != 0) {
     throw std::system_error(errno, std::generic_category(), "cfset*speed failed");
   }
 #else
