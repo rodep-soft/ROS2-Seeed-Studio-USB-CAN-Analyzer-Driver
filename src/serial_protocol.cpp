@@ -125,11 +125,11 @@ std::vector<uint8_t> UsbCanSerialDriver::build_initialization_frame(
 
 std::vector<uint8_t> UsbCanSerialDriver::encode_can_frame(const CanFrame & frame)
 {
-  if (frame.data.size() > 8U) {
+  if (frame.dlc > 8U || frame.data.size() > 8U) {
     throw std::invalid_argument("CAN data payload must be 0..8 bytes");
   }
 
-  const uint8_t dlc = static_cast<uint8_t>(frame.data.size());
+  const uint8_t dlc = static_cast<uint8_t>(std::min<std::size_t>(frame.dlc, frame.data.size()));
   const uint8_t id_len = frame.extended ? 4U : 2U;
 
   std::vector<uint8_t> out;
@@ -156,7 +156,7 @@ std::vector<uint8_t> UsbCanSerialDriver::encode_can_frame(const CanFrame & frame
     out.push_back(static_cast<uint8_t>((frame.id >> 8U) & 0xFFU));
   }
 
-  out.insert(out.end(), frame.data.begin(), frame.data.end());
+  out.insert(out.end(), frame.data.begin(), frame.data.begin() + dlc);
   out.push_back(0x00U);
   out.push_back(0x55U);
 
@@ -207,6 +207,7 @@ std::optional<CanFrame> UsbCanSerialDriver::try_extract_frame(std::vector<uint8_
     CanFrame frame;
     frame.extended = extended;
     frame.remote = remote;
+    frame.dlc = dlc;
 
     if (extended) {
       frame.id =
@@ -261,9 +262,11 @@ void UsbCanSerialDriver::store_u32_le(std::vector<uint8_t> & dst, size_t offset,
 
 void UsbCanSerialDriver::start_async_read()
 {
-  std::lock_guard<std::mutex> lock(serial_mutex_);
-  if (!serial_port_.is_open()) {
-    return;
+  {
+    std::lock_guard<std::mutex> lock(serial_mutex_);
+    if (!serial_port_.is_open()) {
+      return;
+    }
   }
 
   serial_port_.async_read_some(

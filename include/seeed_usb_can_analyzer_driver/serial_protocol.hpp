@@ -20,6 +20,7 @@ struct CanFrame
   uint32_t id{0};
   bool extended{false};
   bool remote{false};
+  uint8_t dlc{0};
   std::vector<uint8_t> data;
 };
 

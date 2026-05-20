@@ -58,7 +58,7 @@ public:
       msg.id = frame.id;
       msg.extended = frame.extended;
       msg.remote = frame.remote;
-      msg.dlc = static_cast<uint8_t>(std::min<std::size_t>(frame.data.size(), 8U));
+      msg.dlc = frame.dlc;
       msg.data = frame.data;
       publisher_->publish(msg);
     });
@@ -131,6 +131,7 @@ private:
     frame.remote = msg.remote;
 
     const auto payload_len = std::min<std::size_t>(msg.data.size(), msg.dlc);
+    frame.dlc = static_cast<uint8_t>(payload_len);
     frame.data.assign(msg.data.begin(), msg.data.begin() + static_cast<std::ptrdiff_t>(payload_len));
 
     try {
