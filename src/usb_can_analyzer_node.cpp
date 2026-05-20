@@ -121,11 +121,19 @@ private:
   void handle_transmit(const seeed_usb_can_analyzer_driver::msg::CanFrame & msg)
   {
     if (msg.dlc > 8U || msg.data.size() > 8U) {
-      RCLCPP_WARN(get_logger(), "Ignoring /ssuca/transmit frame with DLC/data > 8");
+      RCLCPP_WARN(
+        get_logger(),
+        "Ignoring /ssuca/transmit frame with DLC/data > 8 (dlc=%u, data.size=%zu)",
+        msg.dlc,
+        msg.data.size());
       return;
     }
     if (msg.dlc != msg.data.size()) {
-      RCLCPP_WARN(get_logger(), "Ignoring /ssuca/transmit frame with mismatched dlc and data length");
+      RCLCPP_WARN(
+        get_logger(),
+        "Ignoring /ssuca/transmit frame with mismatched dlc/data size (dlc=%u, data.size=%zu)",
+        msg.dlc,
+        msg.data.size());
       return;
     }
 

@@ -128,8 +128,11 @@ std::vector<uint8_t> UsbCanSerialDriver::encode_can_frame(const CanFrame & frame
   if (frame.dlc > 8U || frame.data.size() > 8U) {
     throw std::invalid_argument("CAN data payload must be 0..8 bytes");
   }
+  if (frame.dlc != frame.data.size()) {
+    throw std::invalid_argument("CAN frame dlc must match data length");
+  }
 
-  const uint8_t dlc = static_cast<uint8_t>(std::min<std::size_t>(frame.dlc, frame.data.size()));
+  const uint8_t dlc = frame.dlc;
   const uint8_t id_len = frame.extended ? 4U : 2U;
 
   std::vector<uint8_t> out;
@@ -237,6 +240,7 @@ std::optional<CanFrame> UsbCanSerialDriver::try_extract_frame(std::vector<uint8_
   }
 
   if (buffer.size() > with_padding) {
+    // Move forward by one byte to re-synchronize stream parsing on the next frame boundary.
     buffer.erase(buffer.begin());
   }
   return std::nullopt;
