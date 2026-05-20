@@ -10,7 +10,7 @@ ROS2依存のノード層と、ROS2非依存のシリアル/プロトコル層�
   - `/ssuca/transmit` 購読と `/ssuca/receive` 配信
 - `src/serial_protocol.cpp`
 - `include/seeed_usb_can_analyzer_driver/serial_protocol.hpp`:
-  - ROS2非依存の USBシリアルI/O（Boost.Asio）
+  - ROS2非依存の USBシリアルI/O（Boost.Asio + POSIX termios/ioctl）
   - USB-CANプロトコルのフレーム生成/解析
 - `msg/CanFrame.msg`:
   - 独自メッセージ定義

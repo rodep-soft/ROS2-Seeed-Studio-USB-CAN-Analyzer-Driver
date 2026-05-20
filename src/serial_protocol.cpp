@@ -1,11 +1,121 @@
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <stdexcept>
+#include <system_error>
 #include <utility>
+
+#include <sys/ioctl.h>
+#include <termios.h>
+
+#if defined(__APPLE__)
+#include <IOKit/serial/ioss.h>
+#endif
 
 namespace seeed_usb_can
 {
+
+namespace
+{
+
+speed_t to_posix_baud(int baud)
+{
+  switch (baud) {
+    case 9600:
+      return B9600;
+    case 19200:
+      return B19200;
+    case 38400:
+      return B38400;
+    case 57600:
+      return B57600;
+    case 115200:
+      return B115200;
+    case 230400:
+      return B230400;
+    case 460800:
+      return B460800;
+#if defined(B500000)
+    case 500000:
+      return B500000;
+#endif
+#if defined(B576000)
+    case 576000:
+      return B576000;
+#endif
+#if defined(B921600)
+    case 921600:
+      return B921600;
+#endif
+#if defined(B1000000)
+    case 1000000:
+      return B1000000;
+#endif
+#if defined(B1152000)
+    case 1152000:
+      return B1152000;
+#endif
+#if defined(B1500000)
+    case 1500000:
+      return B1500000;
+#endif
+#if defined(B2000000)
+    case 2000000:
+      return B2000000;
+#endif
+    default:
+      throw std::invalid_argument("Unsupported serial_baud: " + std::to_string(baud));
+  }
+}
+
+void configure_serial_port(int fd, int baud)
+{
+  struct termios tty {};
+  if (tcgetattr(fd, &tty) != 0) {
+    throw std::system_error(errno, std::generic_category(), "tcgetattr failed");
+  }
+
+  cfmakeraw(&tty);
+  tty.c_cflag |= (CLOCAL | CREAD);
+  tty.c_cflag &= ~CSIZE;
+  tty.c_cflag |= CS8;
+  tty.c_cflag &= ~PARENB;
+  tty.c_cflag &= ~CSTOPB;
+#if defined(CRTSCTS)
+  tty.c_cflag &= ~CRTSCTS;
+#endif
+  tty.c_cc[VMIN] = 1;
+  tty.c_cc[VTIME] = 0;
+
+#if defined(__APPLE__)
+  if (cfsetispeed(&tty, B9600) != 0 || cfsetospeed(&tty, B9600) != 0) {
+    throw std::system_error(errno, std::generic_category(), "cfset*speed failed");
+  }
+#else
+  const auto speed = to_posix_baud(baud);
+  if (cfsetispeed(&tty, speed) != 0 || cfsetospeed(&tty, speed) != 0) {
+    throw std::system_error(errno, std::generic_category(), "cfset*speed failed");
+  }
+#endif
+
+  if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+    throw std::system_error(errno, std::generic_category(), "tcsetattr failed");
+  }
+
+#if defined(__APPLE__)
+  speed_t ios_speed = static_cast<speed_t>(baud);
+  if (ioctl(fd, IOSSIOSPEED, &ios_speed) == -1) {
+    throw std::system_error(errno, std::generic_category(), "ioctl(IOSSIOSPEED) failed");
+  }
+#endif
+
+  if (tcflush(fd, TCIOFLUSH) != 0) {
+    throw std::system_error(errno, std::generic_category(), "tcflush failed");
+  }
+}
+
+}  // namespace
 
 UsbCanSerialDriver::UsbCanSerialDriver()
 : serial_port_(io_context_)
@@ -27,14 +137,7 @@ void UsbCanSerialDriver::open(const SerialDriverConfig & config)
       }
 
       serial_port_.open(config.usb_path);
-      serial_port_.set_option(boost::asio::serial_port_base::baud_rate(config.serial_baud));
-      serial_port_.set_option(boost::asio::serial_port_base::character_size(8));
-      serial_port_.set_option(
-        boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
-      serial_port_.set_option(
-        boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
-      serial_port_.set_option(
-        boost::asio::serial_port_base::flow_control(boost::asio::serial_port_base::flow_control::none));
+      configure_serial_port(serial_port_.native_handle(), config.serial_baud);
     }
 
     auto init = build_initialization_frame(
