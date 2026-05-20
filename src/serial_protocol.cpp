@@ -284,7 +284,7 @@ void UsbCanSerialDriver::start_async_read()
 
       std::vector<CanFrame> extracted;
       {
-        std::lock_guard<std::mutex> rx_lock(serial_mutex_);
+        std::lock_guard<std::mutex> serial_lock(serial_mutex_);
         rx_bytes_.insert(
           rx_bytes_.end(),
           read_buffer_.begin(),

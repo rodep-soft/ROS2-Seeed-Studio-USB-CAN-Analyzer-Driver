@@ -124,15 +124,17 @@ private:
       RCLCPP_WARN(get_logger(), "Ignoring /ssuca/transmit frame with DLC/data > 8");
       return;
     }
+    if (msg.dlc != msg.data.size()) {
+      RCLCPP_WARN(get_logger(), "Ignoring /ssuca/transmit frame with mismatched dlc and data length");
+      return;
+    }
 
     CanFrame frame;
     frame.id = msg.id;
     frame.extended = msg.extended;
     frame.remote = msg.remote;
-
-    const auto payload_len = std::min<std::size_t>(msg.data.size(), msg.dlc);
-    frame.dlc = static_cast<uint8_t>(payload_len);
-    frame.data.assign(msg.data.begin(), msg.data.begin() + static_cast<std::ptrdiff_t>(payload_len));
+    frame.dlc = msg.dlc;
+    frame.data = msg.data;
 
     try {
       serial_driver_.send_frame(frame);
