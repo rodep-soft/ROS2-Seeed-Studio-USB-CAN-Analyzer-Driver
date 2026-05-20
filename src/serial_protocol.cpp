@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstring>
 #include <stdexcept>
 #include <system_error>
 #include <utility>
@@ -71,7 +72,8 @@ speed_t to_posix_baud(int baud)
 
 void configure_serial_port(int fd, int baud)
 {
-  struct termios tty {};
+  struct termios tty;
+  std::memset(&tty, 0, sizeof(tty));
   if (tcgetattr(fd, &tty) != 0) {
     throw std::system_error(errno, std::generic_category(), "tcgetattr failed");
   }
@@ -93,7 +95,7 @@ void configure_serial_port(int fd, int baud)
   try {
     configured_speed = to_posix_baud(baud);
   } catch (const std::invalid_argument &) {
-    // On macOS, IOSSIOSPEED below applies the exact custom baud rate.
+    // Keep a valid POSIX speed while IOSSIOSPEED applies the requested custom baud.
   }
   if (cfsetispeed(&tty, configured_speed) != 0 || cfsetospeed(&tty, configured_speed) != 0) {
     throw std::system_error(errno, std::generic_category(), "cfset*speed failed");
