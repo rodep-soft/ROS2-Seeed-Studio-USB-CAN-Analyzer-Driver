@@ -204,10 +204,15 @@ public:
     const int operation_mode = declare_parameter<int>("operation_mode", 0);
 
     if (can_baud_code < 1 || can_baud_code > 12) {
-      throw std::invalid_argument("Parameter 'can_baud_code' must be in range 1..12");
+      throw std::invalid_argument(
+        "Parameter 'can_baud_code' must be 1..12 "
+        "(1=1000k, 2=800k, 3=500k, 4=400k, 5=250k, 6=200k, 7=125k, "
+        "8=100k, 9=50k, 10=20k, 11=10k, 12=5k)");
     }
     if (operation_mode < 0 || operation_mode > 3) {
-      throw std::invalid_argument("Parameter 'operation_mode' must be in range 0..3");
+      throw std::invalid_argument(
+        "Parameter 'operation_mode' must be 0..3 "
+        "(0=normal, 1=loopback, 2=silent, 3=loopback+silent)");
     }
 
     try {
