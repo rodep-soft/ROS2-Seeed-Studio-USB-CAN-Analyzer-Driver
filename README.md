@@ -1,6 +1,6 @@
 # ROS2-Seeed-Studio-USB-CAN-Analyzer-Driver
 
-Seeed Studio USB-CAN Analyzer の ROS 2（kilted 想定）向けドライバです。USB シリアル I/O には Boost.Asio を使用します。
+Seeed Studio USB-CAN Analyzer の ROS 2（Kilted 想定）向けドライバです。USB シリアル I/O には Boost.Asio を使用します。
 
 ## 選択テキストの要約（日本語）
 

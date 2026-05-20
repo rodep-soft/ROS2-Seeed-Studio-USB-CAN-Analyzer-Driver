@@ -165,10 +165,11 @@ public:
   }
 
 private:
-  static uint8_t checksum_8bit(const std::vector<uint8_t> & frame, size_t begin, size_t end)
+  static uint8_t checksum_8bit(
+    const std::vector<uint8_t> & frame, size_t begin_inclusive, size_t end_inclusive)
   {
     uint32_t sum = 0;
-    for (size_t i = begin; i <= end && i < frame.size(); ++i) {
+    for (size_t i = begin_inclusive; i <= end_inclusive && i < frame.size(); ++i) {
       sum += frame[i];
     }
     return static_cast<uint8_t>(sum & 0xFFU);
@@ -222,7 +223,7 @@ public:
       RCLCPP_INFO(get_logger(), "USB-CAN analyzer initialized on %s", serial_device.c_str());
 
       start_async_read();
-      io_thread_ = std::thread([this]() {io_context_.run();});
+      io_thread_ = std::thread([this]() { io_context_.run(); });
     } catch (const std::exception & e) {
       RCLCPP_ERROR(get_logger(), "Failed to open/initialize serial device: %s", e.what());
     }
