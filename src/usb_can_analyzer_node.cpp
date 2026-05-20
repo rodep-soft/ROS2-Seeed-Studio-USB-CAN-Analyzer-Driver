@@ -50,7 +50,10 @@ public:
 
   static std::vector<uint8_t> encode_can_frame(const CanFrame & frame)
   {
-    const uint8_t dlc = static_cast<uint8_t>(std::min<size_t>(frame.data.size(), 8U));
+    if (frame.data.size() > 8U) {
+      throw std::invalid_argument("CAN data payload must be 0..8 bytes");
+    }
+    const uint8_t dlc = static_cast<uint8_t>(frame.data.size());
     const uint8_t id_len = frame.extended ? 4U : 2U;
 
     std::vector<uint8_t> out;
@@ -198,6 +201,13 @@ public:
     const int64_t mask_id = declare_parameter<int64_t>("mask_id", 0);
     const int operation_mode = declare_parameter<int>("operation_mode", 0);
 
+    if (can_baud_code < 1 || can_baud_code > 12) {
+      throw std::invalid_argument("Parameter 'can_baud_code' must be in range 1..12");
+    }
+    if (operation_mode < 0 || operation_mode > 3) {
+      throw std::invalid_argument("Parameter 'operation_mode' must be in range 0..3");
+    }
+
     try {
       serial_port_.open(serial_device);
       serial_port_.set_option(boost::asio::serial_port_base::baud_rate(serial_baud));
@@ -222,7 +232,8 @@ public:
       start_async_read();
       io_thread_ = std::thread([this]() { io_context_.run(); });
     } catch (const std::exception & e) {
-      throw std::runtime_error(std::string("Failed to open/initialize serial device: ") + e.what());
+      throw std::runtime_error(
+        "Failed to open/initialize serial device '" + serial_device + "': " + e.what());
     }
   }
 
