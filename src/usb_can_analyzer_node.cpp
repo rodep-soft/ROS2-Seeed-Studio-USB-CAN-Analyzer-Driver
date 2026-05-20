@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -116,7 +117,7 @@ public:
     const size_t without_padding = 1U + 1U + id_len + dlc + 1U;
     const size_t with_padding = without_padding + 1U;
 
-    auto parse_with_length = [&](size_t total_len, bool padded) -> std::optional<CanFrame> {
+    auto parse_with_length = [&](size_t total_len) -> std::optional<CanFrame> {
       if (buffer.size() < total_len) {
         return std::nullopt;
       }
@@ -143,18 +144,14 @@ public:
       frame.data.assign(buffer.begin() + static_cast<std::ptrdiff_t>(data_offset),
         buffer.begin() + static_cast<std::ptrdiff_t>(data_offset + dlc));
 
-      if (padded) {
-        (void)buffer[total_len - 2U];
-      }
-
       buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_len));
       return frame;
     };
 
-    if (auto frame = parse_with_length(with_padding, true)) {
+    if (auto frame = parse_with_length(with_padding)) {
       return frame;
     }
-    if (auto frame = parse_with_length(without_padding, false)) {
+    if (auto frame = parse_with_length(without_padding)) {
       return frame;
     }
 
@@ -193,7 +190,7 @@ public:
     serial_port_(io_context_)
   {
     const std::string serial_device = declare_parameter<std::string>("serial_device", "/dev/ttyUSB0");
-    const int serial_baud = declare_parameter<int>("serial_baud", 2'000'000);
+    const int serial_baud = declare_parameter<int>("serial_baud", 2000000);
 
     const int can_baud_code = declare_parameter<int>("can_baud_code", 3);
     const bool tx_extended = declare_parameter<bool>("tx_extended", false);
@@ -225,7 +222,7 @@ public:
       start_async_read();
       io_thread_ = std::thread([this]() { io_context_.run(); });
     } catch (const std::exception & e) {
-      RCLCPP_ERROR(get_logger(), "Failed to open/initialize serial device: %s", e.what());
+      throw std::runtime_error(std::string("Failed to open/initialize serial device: ") + e.what());
     }
   }
 
@@ -247,7 +244,13 @@ private:
       boost::asio::buffer(read_buffer_),
       [this](const boost::system::error_code & ec, std::size_t bytes_transferred) {
         if (ec) {
+          if (ec == boost::asio::error::operation_aborted) {
+            return;
+          }
           RCLCPP_WARN(get_logger(), "Serial read error: %s", ec.message().c_str());
+          if (serial_port_.is_open()) {
+            start_async_read();
+          }
           return;
         }
 
@@ -291,8 +294,15 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<seeed_usb_can::UsbCanAnalyzerNode>();
-  rclcpp::spin(node);
+  try {
+    auto node = std::make_shared<seeed_usb_can::UsbCanAnalyzerNode>();
+    rclcpp::spin(node);
+  } catch (const std::exception & e) {
+    auto logger = rclcpp::get_logger("usb_can_analyzer_node");
+    RCLCPP_FATAL(logger, "%s", e.what());
+    rclcpp::shutdown();
+    return 1;
+  }
   rclcpp::shutdown();
   return 0;
 }
