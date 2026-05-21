@@ -7,7 +7,7 @@ ROS2依存のノード層と、ROS2非依存のシリアル/プロトコル層�
 
 - `src/usb_can_analyzer_node.cpp`:
   - ROS2ノード実装
-  - `/ssuca/transmit` 購読と `/ssuca/receive` 配信
+  - サブスクライバー`/ssuca/transmit` と パブリッシャー`/ssuca/receive` の実装
 - `src/serial_protocol.cpp`
 - `include/seeed_usb_can_analyzer_driver/serial_protocol.hpp`:
   - ROS2非依存の USBシリアルI/O（Boost.Asio + POSIX termios/ioctl）
@@ -48,7 +48,6 @@ ros2 run seeed_usb_can_analyzer_driver usb_can_analyzer_node
 ros2 run seeed_usb_can_analyzer_driver usb_can_analyzer_node --ros-args \
   -p usb_path:=/dev/ttyUSB0 \
   -p bitrate:=500000 \
-  -p serial_baud:=2000000 \
   -p operation_mode:=0
 ```
 
