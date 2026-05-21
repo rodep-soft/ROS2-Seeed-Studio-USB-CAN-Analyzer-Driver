@@ -273,7 +273,7 @@ std::vector<uint8_t> UsbCanSerialDriver::encode_can_frame(const CanFrame & frame
   }
 
   out.insert(out.end(), frame.data.begin(), frame.data.begin() + dlc);
-  out.push_back(0x00U);
+  
   out.push_back(0x55U);
 
   return out;
