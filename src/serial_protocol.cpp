@@ -35,8 +35,10 @@ speed_t to_posix_baud(int baud)
       return B115200;
     case 230400:
       return B230400;
+#if defined(B460800)
     case 460800:
       return B460800;
+#endif
 #if defined(B500000)
     case 500000:
       return B500000;
