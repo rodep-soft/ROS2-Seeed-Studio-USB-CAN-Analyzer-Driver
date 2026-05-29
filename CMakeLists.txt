@@ -11,7 +11,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS system)
+find_package(Boost CONFIG REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(Threads REQUIRED)
@@ -27,7 +27,7 @@ target_include_directories(usb_can_serial_protocol PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(usb_can_serial_protocol Boost::system)
+target_link_libraries(usb_can_serial_protocol Boost::headers)
 
 
 add_executable(usb_can_analyzer_node
@@ -42,7 +42,7 @@ target_link_libraries(usb_can_analyzer_node
   PUBLIC
     rclcpp::rclcpp
   PRIVATE
-    Boost::system
+    Boost::headers
     usb_can_serial_protocol
 )
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} rosidl_typesupport_cpp)
@@ -52,6 +52,11 @@ add_dependencies(usb_can_analyzer_node ${PROJECT_NAME}__rosidl_generator_cpp)
 install(
   DIRECTORY include/
   DESTINATION include
+)
+
+install(
+  DIRECTORY config launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(TARGETS

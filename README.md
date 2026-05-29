@@ -51,6 +51,19 @@ ros2 run seeed_usb_can_analyzer_driver usb_can_analyzer_node --ros-args \
   -p operation_mode:=0
 ```
 
+### launch ファイルで実行
+
+```bash
+ros2 launch seeed_usb_can_analyzer_driver usb_can_analyzer.launch.py
+```
+
+既定のパラメータは `config/usb_can_analyzer.yaml` にあります。別の YAML を使う場合:
+
+```bash
+ros2 launch seeed_usb_can_analyzer_driver usb_can_analyzer.launch.py \
+  config_file:=/path/to/usb_can_analyzer.yaml
+```
+
 ## パラメータ
 
 - `usb_path` (string): USBシリアルデバイスパス（例: `/dev/ttyUSB0`）

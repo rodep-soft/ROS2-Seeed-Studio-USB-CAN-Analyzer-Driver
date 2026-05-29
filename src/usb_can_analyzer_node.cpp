@@ -40,7 +40,7 @@ public:
     subscription_ = create_subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>(
       "/ssuca/transmit",
       100,
-      [this](const seeed_usb_can_analyzer_driver::msg::CanFrame::SharedPtr msg) {
+      [this](const seeed_usb_can_analyzer_driver::msg::CanFrame::ConstSharedPtr msg) {
         this->handle_transmit(*msg);
       });
 
